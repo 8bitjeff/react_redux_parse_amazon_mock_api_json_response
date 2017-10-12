@@ -45,9 +45,11 @@ const Parser = ({value, onParse}) => {
         <h1>Enter Mock json in the Box Below</h1>
         <textarea placeholder="Drop Mock Json in here!" cols="100" rows="10" id="jsonbox" defaultValue={value.data}></textarea>
         <div><button className="btn btn-primary" onClick={onParse}>Parse it!</button></div>
-        <div><h1>{value.output}</h1></div>
+        <div dangerouslySetInnerHTML={{__html:value.output}}></div>
     </div>
     );
+    //should normall sanitize the dangerouslySetInnerHTML first  
+    //to prevent XSS bugs - better {['First ', <span>&middot;</span>, ' Second']}
 }
 
 //render
@@ -86,9 +88,36 @@ const parser=(state={data:"",output:"output"}, action)=> {
 
 function parseJson(state) {
     console.log("parse");
-    console.log("data", document.getElementById('jsonbox').value); //this works fione for a simple example, but a react component would be better
-    var mockJson=state.data;
-    return Object.assign({}, state, {output:mockJson});
+    //this works fine for a simple example, but a react component would be better with onChange
+    //for the json box. cab use form onSubmit with Prevent default too. 
+    
+    var rawJson=document.getElementById('jsonbox').value;
+    var splitAtLineJson=rawJson.split('\n');
+    var jsonDataString="";
+    var jsonData;
+    //anything with a # write out as literal. The reset until the next # turn into Json and the evaluate in html.
+    //skip all lines that start with "#" and put back into 
+    for (var value of splitAtLineJson){
+        if (!value.startsWith("#")){
+            jsonDataString+=value;
+        }
+    }
+    console.log("jsonDataString", jsonDataString); 
+    jsonData=JSON.parse(jsonDataString);
+    
+            //1. start here and take all of the following lines and create a json object out of them
+            //2. Evaluate those fields and write how HTML for each item. 
+            //fields:
+            //headerImage:string img src
+            //headerline:string text
+            //body:string text
+            //button:{}
+            //button.text:string text
+            //button.action:string href
+    returnHtml+="<div>Parsed JSON "+value+"</div>";
+    returnHtml+="<div>Number of items in JSON "+jsonData.length+"</div>";
+    
+    return Object.assign({}, state, {output:returnHtml});
     
 }
 
