@@ -10081,9 +10081,9 @@ const Parser = ({ value, onParse }) => {
         __WEBPACK_IMPORTED_MODULE_0_react___default.a.createElement(
             'h1',
             null,
-            'Enter Mock json in the Box Below'
+            'Enter Mock json in the Box Below.'
         ),
-        __WEBPACK_IMPORTED_MODULE_0_react___default.a.createElement('textarea', { placeholder: 'Drop Mock Json in here!', cols: '100', rows: '10', id: 'jsonbox', defaultValue: value.data }),
+        __WEBPACK_IMPORTED_MODULE_0_react___default.a.createElement('textarea', { placeholder: 'Drop Mock Json in here! Should start with {feed: [. Do not put in the #if #the #end statements.', cols: '100', rows: '10', id: 'jsonbox', defaultValue: value.data }),
         __WEBPACK_IMPORTED_MODULE_0_react___default.a.createElement(
             'div',
             null,
@@ -10133,32 +10133,65 @@ function parseJson(state) {
     //for the json box. cab use form onSubmit with Prevent default too. 
 
     var rawJson = document.getElementById('jsonbox').value;
-    var splitAtLineJson = rawJson.split('\n');
-    var jsonDataString = "";
+    var returnHtml = "";
     var jsonData;
-    //anything with a # write out as literal. The reset until the next # turn into Json and the evaluate in html.
-    //skip all lines that start with "#" and put back into 
-    for (var value of splitAtLineJson) {
-        if (!value.startsWith("#")) {
-            jsonDataString += value;
-        }
-    }
-    console.log("jsonDataString", jsonDataString);
-    jsonData = JSON.parse(jsonDataString);
+    //if any line befies with "#", this is invalid Json
+    var validJson = true;
 
-    //1. start here and take all of the following lines and create a json object out of them
-    //2. Evaluate those fields and write how HTML for each item. 
-    //fields:
-    //headerImage:string img src
-    //headerline:string text
-    //body:string text
-    //button:{}
-    //button.text:string text
-    //button.action:string href
-    returnHtml += "<div>Parsed JSON " + value + "</div>";
-    returnHtml += "<div>Number of items in JSON " + jsonData.length + "</div>";
+    //var jsonWhitespaceRemoved=JSON.stringify(JSON.parse(rawJson));
+    if (!isJsonString(rawJson)) {
+        validJson = false;
+    }
+
+    if (validJson) {
+        returnHtml += "<div>Parsed JSON</div>";
+
+        jsonData = JSON.parse(rawJson);
+        returnHtml += "<div>Valid Json.</div>";
+        if (jsonData.feed) {
+            var items = jsonData.feed;
+            returnHtml += "<div>Number of items: " + items.length + "</div>";
+            for (var value of items) {
+                if (value.headerline) {
+                    returnHtml += "<div><h3>" + value.headerline + "</h3></div>";
+                }
+                if (value.headerImage) {
+                    returnHtml += '<div><img src="' + value.headerImage + '" width="400"></div>';
+                }
+                if (value.body) {
+                    returnHtml += '<div>' + value.body + '</div>';
+                }
+                if (value.button && value.button.text && value.button.action) {
+                    returnHtml += '<div><a href="' + value.button.action + '">' + value.button.text + '</a></div>';
+                }
+            }
+
+            //1. start here and take all of the following lines and create a json object out of them
+            //2. Evaluate those fields and write how HTML for each item. 
+            //fields:
+
+            //body:string text
+            //button:{}
+            //button.text:string text
+            //button.action:string href 
+        } else {
+            returnHtml += "<div>No Feed array in Json.</div>";
+        }
+    } else {
+        returnHtml += "<div>Invalid Json.</div>";
+    }
 
     return Object.assign({}, state, { output: returnHtml });
+}
+
+function isJsonString(str) {
+    try {
+        JSON.parse(str);
+    } catch (e) {
+        //console.log(e);
+        return false;
+    }
+    return true;
 }
 
 //store
